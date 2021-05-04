@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+        <head>
+                <meta charset="UTF-8" />
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>UHospital - Paciente</title>
+                <link
+                        rel="stylesheet"
+                        href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+                        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+                        crossorigin="anonymous"
+                />
+        </head>
+        <body>
+                <nav class="navbar navbar-dark bg-dark mb-5">
+                        <a class="navbar-brand" href="index.html">
+                                <img
+                                        src="./assets/hospital.png"
+                                        width="30"
+                                        height="30"
+                                        class="d-inline-block align-top"
+                                        alt=""
+                                />
+                                UHospital
+                        </a>
+                </nav>
+                <div class="container">
+                        <h1>Paciente</h1>
+                        <p id="currentUser"></p>
+                        <button id="modificarperfil" class="btn btn-secondary">
+                                Modificar Perfil
+                        </button>
+                        <button id="hacercita" class="btn btn-warning">
+                                Hacer Cita
+                        </button>
+                        <h3>Citas:</h3>
+                        <div class="m-2">
+                        <div class="d-flex flex-column" id="citas"></div>
+                </div>
+                <script>
+                        //getting URL parameters
+                        const queryStrings = window.location.search;
+                        const urlParams = new URLSearchParams(queryStrings);
+                        const firstName = urlParams.get("first_name");
+                        const lastName = urlParams.get("last_name");
+                        const date = urlParams.get("date");
+                        const gender = urlParams.get("gender");
+                        const nickname = urlParams.get("nickname");
+                        const password = urlParams.get("password");
+                        const phone = urlParams.get("phone");
+                        const typeUser = urlParams.get("typeUser");
+
+                        //Modificar Perfil
+                        modificarperfil.addEventListener("click", (e) => {
+                                let params = `first_name=${firstName}`;
+                                params += `&last_name=${lastName}`;
+                                params += `&date=${date}`;
+                                params += `&gender=${gender}`;
+                                params += `&nickname=${nickname}`;
+                                params += `&password=${password}`;
+                                params += `&phone=${phone}`;
+                                params += `&typeUser=${typeUser}`;
+                                window.location = "modificarpatient.html?" + params;
+                        });
+
+                        //Hacer Cita
+                        hacercita.addEventListener("click", (e) => {
+                                let params = `first_name=${firstName}`;
+                                params += `&last_name=${lastName}`;
+                                params += `&date=${date}`;
+                                params += `&gender=${gender}`;
+                                params += `&nickname=${nickname}`;
+                                params += `&password=${password}`;
+                                params += `&phone=${phone}`;
+                                params += `&typeUser=${typeUser}`;
+                                window.location = "cita.html?" + params;
+                        });
+
+ 
+                        //getting inputs
+                        let currentUser = document.getElementById("currentUser");
+                        currentUser.innerText = `Bienvenido ${firstName} ${lastName}!`;
+ 
+                        //getting citas
+                        getCitas();
+                        function getCitas() {
+                                
+                                fetch("https://uhospital-201404202.herokuapp.com/cita")
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                citas.innerHTML = "";
+                                                data.forEach((cita) => {
+                                                        if (cita.patient_nickname == nickname){
+                                                        let card = document.createElement("div");
+                                                        card.className = "card m-2";
+                                                        card.id = cita.patient_nickname;
+                                                        let cardBody = document.createElement("div");
+                                                        cardBody.className = "card-body";
+                                                        let citaEstado = document.createElement("h5");
+                                                        citaEstado.className = "card-title";
+                                                        citaEstado.innerText = "Estado: " + cita.estado;
+                                                        let citaHora = document.createElement("h5");
+                                                        citaHora.className = "card-subtitle";
+                                                        citaHora.innerText = "Hora De la Cita: " + cita.time;
+                                                        let citaFecha = document.createElement("h5");
+                                                        citaFecha.innerText = "Fecha De la Cita: " + cita.date;
+                                                        let citaMotivo = document.createElement("h5");
+                                                        citaMotivo.innerText = "Motivo: " + cita.motivo;
+                                                        cardBody.appendChild(citaEstado);
+                                                        cardBody.appendChild(citaHora);
+                                                        cardBody.appendChild(citaFecha);
+                                                        cardBody.appendChild(citaMotivo);
+                                                        card.appendChild(cardBody);
+                                                        citas.appendChild(card);
+                                                        }
+                                                
+
+                                                });
+                                        })
+                                        .catch((error) => console.error(error));
+                        }
+                        getCitas();
+                </script>
+                <script
+                        src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+                        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+                        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+                        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+                        crossorigin="anonymous"
+                ></script>
+        </body>
+</html>

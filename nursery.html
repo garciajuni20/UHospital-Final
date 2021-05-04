@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+        <head>
+                <meta charset="UTF-8" />
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>UHospital - Nursery</title>
+                <link
+                        rel="stylesheet"
+                        href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+                        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+                        crossorigin="anonymous"
+                />
+        </head>
+        <body>
+                <nav class="navbar navbar-dark bg-dark mb-5">
+                        <a class="navbar-brand" href="index.html">
+                                <img
+                                        src="./assets/hospital.png"
+                                        width="30"
+                                        height="30"
+                                        class="d-inline-block align-top"
+                                        alt=""
+                                />
+                                UHospital
+                        </a>
+                </nav>
+                <div class="container">
+                        <h1>Nursery</h1>
+                        <p id="currentUser"></p>
+                        <button id="modificarperfil" class="btn btn-secondary">
+                                Modificar Perfil
+                        </button>
+                        <button id="citaaceptada" class="btn btn-warning">
+                                Cita Aceptada
+                        </button>
+                        <button id="generarfactura" class="btn btn-outline-dark">
+                                Generar Factura
+                        </button>
+                        <h2>Lista Citas Pendientes:</h2>
+                        <div class="d-flex flex-column" id="citas"></div>
+                </div>
+                <script>
+
+                        
+                        //getting URL parameters
+                        const queryStrings = window.location.search;
+                        const urlParams = new URLSearchParams(queryStrings);
+                        const firstName = urlParams.get("first_name");
+                        const lastName = urlParams.get("last_name");
+                        const date = urlParams.get("date");
+                        const gender = urlParams.get("gender");
+                        const nickname = urlParams.get("nickname");
+                        const password = urlParams.get("password");
+                        const phone = urlParams.get("phone");
+                        const typeUser = urlParams.get("typeUser");
+
+                        //getting inputs
+                        let currentUser = document.getElementById("currentUser");
+                        currentUser.innerText = `Bienvenido ${firstName} ${lastName}!`;
+
+                        //Modificar Perfil
+                        modificarperfil.addEventListener("click", (e) => {
+                                let params = `first_name=${firstName}`;
+                                params += `&last_name=${lastName}`;
+                                params += `&date=${date}`;
+                                params += `&gender=${gender}`;
+                                params += `&nickname=${nickname}`;
+                                params += `&password=${password}`;
+                                params += `&phone=${phone}`;
+                                params += `&typeUser=${typeUser}`;
+                                window.location = "modificarnursery.html?" + params;
+                        });
+
+                        //Generar Factura
+                        generarfactura.addEventListener("click", (e) => {
+                                let params = `first_name=${firstName}`;
+                                params += `&last_name=${lastName}`;
+                                params += `&date=${date}`;
+                                params += `&gender=${gender}`;
+                                params += `&nickname=${nickname}`;
+                                params += `&password=${password}`;
+                                params += `&phone=${phone}`;
+                                params += `&typeUser=${typeUser}`;
+                                window.location = "generarfactura.html?" + params;
+                        });
+
+                         //Ver Citas Aceptadas
+                         citaaceptada.addEventListener("click", (e) => {
+                                let params = `first_name=${firstName}`;
+                                params += `&last_name=${lastName}`;
+                                params += `&date=${date}`;
+                                params += `&gender=${gender}`;
+                                params += `&nickname=${nickname}`;
+                                params += `&password=${password}`;
+                                params += `&phone=${phone}`;
+                                params += `&typeUser=${typeUser}`;
+                                window.location = "citaaceptada.html?" + params;
+                        });
+
+                        //getting citas
+                        getCitas();
+                        function getCitas() {
+                                
+                                fetch("https://uhospital-201404202.herokuapp.com/cita")
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                citas.innerHTML = "";
+                                                data.forEach((cita) => {
+                                                        if (cita.estado == "Pendiente"){
+                                                        let card = document.createElement("div");
+                                                        card.className = "card m-2";
+                                                        card.id = cita.patient_nickname;
+                                                        let cardBody = document.createElement("div");
+                                                        cardBody.className = "card-body";
+                                                        let citaEstado = document.createElement("h5");
+                                                        citaEstado.className = "card-title";
+                                                        citaEstado.innerText = "Motivo: " + cita.motivo;
+                                                        let citaHora = document.createElement("h5");
+                                                        citaHora.className = "card-subtitle";
+                                                        citaHora.innerText = "Hora De la Cita: " + cita.time;
+                                                        let citaFecha = document.createElement("h5");
+                                                        citaFecha.innerText = "Fecha De la Cita: " + cita.date;
+                                                        let aceptar = document.createElement("BUTTON");
+                                                        aceptar.className = "btn btn-success w-100";
+                                                        aceptar.innerText = "Aceptar"
+                                                        aceptar.addEventListener("click", () => {
+                                                                let seleccionDoctor = document.createElement("select");
+                                                                seleccionDoctor.className = "lista"
+                                                                fetch("https://uhospital-201404202.herokuapp.com/doctor")
+                                                                        .then((response) => response.json())
+                                                                        .then((data) => {
+                                                                                data.forEach((doctor) => {
+                                                                                        
+                                                                                        let nombredoctor = document.createElement("option");
+                                                                                        nombredoctor.innerText = "Nombre: " + doctor.first_name;  
+                                                                                        nombredoctor.value = doctor.first_name
+                                                                                        seleccionDoctor.append(nombredoctor)           
+                                                                                });
+                                                                        })
+                                                                let textoListaDoctor = document.createElement("h6");
+                                                                textoListaDoctor.innerText = "Selecciona Doctor: ";
+                                                                let confirmar = document.createElement("BUTTON");
+                                                                confirmar.className = "btn btn-outline-info w-100";
+                                                                confirmar.innerText = "Confirmar"
+                                                                confirmar.addEventListener("click", () => {
+                                                                        const aceptarCita = {
+                                                                                patient_nickname: cita.patient_nickname,
+                                                                                time: cita.time,
+                                                                                date: cita.date,
+                                                                                motivo: cita.motivo,
+                                                                                estado: "Aceptada",
+                                                                                doctor_name: seleccionDoctor.value,
+                                                                        };
+                                                                        console.log(aceptarCita);
+                                                                        fetch("https://uhospital-201404202.herokuapp.com/cita", {
+                                                                                method: "PUT",
+                                                                                headers: {
+                                                                                        "content-type": "application/json",
+                                                                                },
+                                                                                body: JSON.stringify(aceptarCita),
+                                                                        })
+                                                                                .then((response) => response.json())
+                                                                                .then((data) => {
+                                                                                        if (data.message) {
+                                                                                                alert("Cita Aceptada");
+                                                                                                let params = `first_name=${firstName}`;
+                                                                                                params += `&last_name=${lastName}`;
+                                                                                                params += `&date=${date}`;
+                                                                                                params += `&gender=${gender}`;
+                                                                                                params += `&nickname=${nickname}`;
+                                                                                                params += `&password=${password}`;
+                                                                                                params += `&phone=${phone}`;
+                                                                                                params += `&typeUser=${typeUser}`;
+                                                                                                window.location = "nursery.html?" + params;
+                                                                                        } else {
+                                                                                                console.error(data);
+                                                                                                alert("Error Aceptando Cita");
+                                                                                        }
+                                                                                })
+                                                                                .catch((error) => console.error(error));
+                                                                
+                                                                   
+                                                                });
+                                                                cardBody.appendChild(textoListaDoctor);
+                                                                cardBody.appendChild(seleccionDoctor);
+                                                                cardBody.appendChild(confirmar);  
+                                                                });
+                                                        let rechazar = document.createElement("BUTTON");
+                                                        rechazar.className = "btn btn-danger w-100";
+                                                        rechazar.innerText = "Rechazar"
+                                                        rechazar.addEventListener("click", () => {
+                                                                const rechazarCita = {
+                                                                                patient_nickname: cita.patient_nickname,
+                                                                                time: cita.time,
+                                                                                date: cita.date,
+                                                                                motivo: cita.motivo,
+                                                                                estado: "Rechazada",
+                                                                                doctor_name: "Rechazada",
+                                                                        };
+                                                                        console.log(rechazarCita);
+                                                                        fetch("https://uhospital-201404202.herokuapp.com/cita", {
+                                                                                method: "PUT",
+                                                                                headers: {
+                                                                                        "content-type": "application/json",
+                                                                                },
+                                                                                body: JSON.stringify(rechazarCita),
+                                                                        })
+                                                                                .then((response) => response.json())
+                                                                                .then((data) => {
+                                                                                        if (data.message) {
+                                                                                                alert("Cita Rechazada");
+                                                                                                let params = `first_name=${firstName}`;
+                                                                                                params += `&last_name=${lastName}`;
+                                                                                                params += `&date=${date}`;
+                                                                                                params += `&gender=${gender}`;
+                                                                                                params += `&nickname=${nickname}`;
+                                                                                                params += `&password=${password}`;
+                                                                                                params += `&phone=${phone}`;
+                                                                                                params += `&typeUser=${typeUser}`;
+                                                                                                window.location = "nursery.html?" + params;
+                                                                                        } else {
+                                                                                                console.error(data);
+                                                                                                alert("Error Rechazando Cita");
+                                                                                        }
+                                                                                })
+                                                                                .catch((error) => console.error(error));
+                                                                });
+                                                        cardBody.appendChild(citaEstado);
+                                                        cardBody.appendChild(citaHora);
+                                                        cardBody.appendChild(citaFecha);
+                                                        cardBody.appendChild(aceptar);
+                                                        cardBody.appendChild(rechazar);
+                                                        card.appendChild(cardBody);
+                                                        citas.appendChild(card);
+                                                        }
+                                                
+
+                                                });
+                                        })
+                                        .catch((error) => console.error(error));
+                        }
+                        getCitas();
+                </script>
+                <script
+                        src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+                        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+                        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+                        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+                        crossorigin="anonymous"
+                ></script>
+        </body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+        <head>
+                <meta charset="UTF-8" />
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>UHospital - Generar Factura</title>
+                <link
+                        rel="stylesheet"
+                        href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+                        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+                        crossorigin="anonymous"
+                />
+        </head>
+        <body>
+                <nav class="navbar navbar-dark bg-dark mb-5">
+                        <a class="navbar-brand" href="index.html">
+                                <img
+                                        src="./assets/hospital.png"
+                                        width="30"
+                                        height="30"
+                                        class="d-inline-block align-top"
+                                        alt=""
+                                />
+                                UHospital
+                        </a>
+                </nav>
+                <div class="container">
+                        <div class="row">
+                                <div class="col">
+                                        <h1 class="text-center mb-5">Generar Factura</h1>
+                                        <form id="facturaForm">
+                                                <div class="form-group">
+                                                    <div class="form-group">
+                                                        <label for="facturaDate">Fecha:</label>
+                                                        <input
+                                                                type="date"
+                                                                class="form-control"
+                                                                id="facturaDate"
+                                                                placeholder="Ingresa Fecha"
+                                                        />
+                                                </div>
+                                                        <label for="facturaPaciente">Paciente:</label>
+                                                        <input
+                                                                type="text"
+                                                                class="form-control"
+                                                                id="facturaPaciente"
+                                                                placeholder="Ingresa nombre del paciente"
+                                                        />
+                                                </div>
+                                                <div>
+                                                <label for="precioConsulta">Precio Consulta:</label>
+                                                <input
+                                                        type="text"
+                                                        class="form-control"
+                                                        id="precioConsulta"
+                                                        placeholder="Ingresa precio consulta"
+                                                />
+                                                </div>
+                                            <div>
+                                            <label for="costoOperacion">Costo De Operacion:</label>
+                                            <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    id="costoOperacion"
+                                                    placeholder="Ingresa costo de operacion"
+                                            />
+                                            </div>
+                                        <div>
+                                        <label for="costoInternado">Costo De Internado:</label>
+                                        <input
+                                                type="text"
+                                                class="form-control"
+                                                id="costoInternado"
+                                                placeholder="Ingresa costo de internado"
+                                        />
+                                        </div>
+                                    <div>
+                                    <label for="facturaTotal">total:</label>
+                                    <input
+                                            type="text"
+                                            class="form-control"
+                                            id="facturaTotal"
+                                            placeholder="Ingresa monto total a pagar"
+                                    />
+                                    </div>
+                                    <div><label id="ListaDoctor">Doctor:  </label></div>
+                                    <div>
+                                        <button
+                                        id="generarButton"
+                                        type="submit"
+                                        class="btn btn-primary w-100"
+                                >
+                                        Generar
+                                </button>
+                        </form>
+                                    </div>
+
+                                </div>
+                        </div>
+                </div>
+                <script>
+                        //getting URL parameters
+                        const queryStrings = window.location.search;
+                        const urlParams = new URLSearchParams(queryStrings);
+                        const firstName = urlParams.get("first_name");
+                        const lastName = urlParams.get("last_name");
+                        const date = urlParams.get("date");
+                        const gender = urlParams.get("gender");
+                        const nickname = urlParams.get("nickname");
+                        const password = urlParams.get("password");
+                        const phone = urlParams.get("phone");
+                        const typeUser = urlParams.get("typeUser");
+
+                        //Modificar
+                        let facturaForm = document.getElementById("facturaForm");
+                        let facturaPaciente = document.getElementById("facturaPaciente");
+                        let facturaDate = document.getElementById("facturaDate");
+                        let precioConsulta = document.getElementById("precioConsulta");
+                        let costoOperacion = document.getElementById("costoOperacion");
+                        let costoInternado = document.getElementById("costoInternado");
+                        let facturaTotal = document.getElementById("facturaTotal");
+                        let generarButton = document.getElementById("generarButton");
+                        let getReportFactura = document.getElementById("getReportFactura");
+
+
+                        //Ingresar Droplist
+                        let seleccionDoctor = document.createElement("select");
+                                                                seleccionDoctor.className = "lista"
+                                                                fetch("https://uhospital-201404202.herokuapp.com/doctor")
+                                                                        .then((response) => response.json())
+                                                                        .then((data) => {
+                                                                                data.forEach((doctor) => {
+                                                                                        
+                                                                                        let nombredoctor = document.createElement("option");
+                                                                                        nombredoctor.innerText = "Nombre: " + doctor.first_name;  
+                                                                                        nombredoctor.value = doctor.first_name
+                                                                                        seleccionDoctor.append(nombredoctor)           
+                                                                                });
+                                                                        })
+                                                                        ListaDoctor.appendChild(seleccionDoctor);
+
+
+                        facturaForm.addEventListener("submit", (e) => {
+                                e.preventDefault();
+                        });
+                        generarButton.addEventListener("click", (e) => {
+                                const crearFactura = {
+                                        date: facturaDate.value,
+                                        patient_name: facturaPaciente.value,
+                                        doctor_name: seleccionDoctor.value,
+                                        precio_consulta: precioConsulta.value,
+                                        precio_operacion: costoOperacion.value,
+                                        precio_internado: costoInternado.value,
+                                        total: facturaTotal.value,
+                                };
+                                console.log(crearFactura);
+                                fetch("https://uhospital-201404202.herokuapp.com/factura", {
+                                        method: "POST",
+                                        headers: {
+                                                "content-type": "application/json",
+                                        },
+                                        body: JSON.stringify(crearFactura),
+                                })
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                if (data.message) {
+                                                        console.error(data);
+                                                        alert("Problema con la creacion de Factura");
+                                                } else {
+                                                        alert("Factura Creada");
+                                                        window.open("https://uhospital-201404202.herokuapp.com/reports/factura");
+                                                }
+                                        })
+                                        .catch((error) => console.error(error));
+                        });
+                </script>
+                <script
+                        src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+                        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+                        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+                        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+                        crossorigin="anonymous"
+                ></script>
+        </body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+        <head>
+                <meta charset="UTF-8" />
+                <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>UHospital - Admin</title>
+                <link
+                        rel="stylesheet"
+                        href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+                        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+                        crossorigin="anonymous"
+                />
+        </head>
+        <body>
+                <nav class="navbar navbar-dark bg-dark mb-5">
+                        <a class="navbar-brand" href="index.html">
+                                <img
+                                        src="./assets/hospital.png"
+                                        width="30"
+                                        height="30"
+                                        class="d-inline-block align-top"
+                                        alt=""
+                                />
+                                UHospital
+                        </a>
+                </nav>
+                <div class="container">
+                        <h1>Admin Dashboard</h1>
+                        <p id="currentUser"></p>
+                        <h3>Medicinas</h3>
+                        <div class="m-2">
+                                <span><input type="file" id="medicinesFileInput" /></span>
+                                <span
+                                        ><button id="loadMedicines" class="btn btn-success">
+                                                Cargar medicinas
+                                        </button></span
+                                >
+                        </div>
+                        <div>
+                                <button id="getReportMedicines" class="btn btn-primary w-100 m-2">
+                                        Generar reporte en pdf
+                                </button>
+                        </div>
+                        <div class="d-flex flex-column" id="medicines"></div>
+                </div>
+                <script>
+                        //getting URL parameters
+                        const queryStrings = window.location.search;
+                        const urlParams = new URLSearchParams(queryStrings);
+                        const firstName = urlParams.get("first_name");
+                        const lastName = urlParams.get("last_name");
+ 
+                        //getting inputs
+                        let currentUser = document.getElementById("currentUser");
+                        currentUser.innerText = `Bienvenido ${firstName} ${lastName}!`;
+                        let medicines = document.getElementById("medicines");
+                        let medicinesFileInput = document.getElementById("medicinesFileInput");
+                        let loadMedicines = document.getElementById("loadMedicines");
+                        let getReportMedicines = document.getElementById("getReportMedicines");
+ 
+                        //getting medicines
+                        getMedicines();
+                        function getMedicines() {
+                                fetch("https://uhospital-201404202.herokuapp.com/medicine")
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                medicines.innerHTML = "";
+                                                data.forEach((medicine) => {
+                                                        let card = document.createElement("div");
+                                                        card.className = "card m-2";
+                                                        card.id = medicine.name;
+                                                        let cardBody = document.createElement("div");
+                                                        cardBody.className = "card-body";
+                                                        let medicineName = document.createElement("h5");
+                                                        medicineName.className = "card-title";
+                                                        medicineName.innerText = "Nombre: " + medicine.name;
+                                                        let medicineQuantity = document.createElement("h5");
+                                                        medicineQuantity.className = "card-subtitle";
+                                                        medicineQuantity.innerText = "Cantidad: " + medicine.quantity;
+                                                        let medicinePrice = document.createElement("h5");
+                                                        medicinePrice.className = "card-subtitle";
+                                                        medicinePrice.innerText = "Precio: " + medicine.price;
+                                                        let medicineDescription = document.createElement("h5");
+                                                        medicineDescription.innerText = medicine.description;
+                                                        let medicineDelete = document.createElement("BUTTON");
+                                                        medicineDelete.className = "btn btn-danger w-100";
+                                                        medicineDelete.innerText = "Eliminar Medicina";
+                                                        medicineDelete.addEventListener("click", () => {
+                                                                fetch("https://uhospital-201404202.herokuapp.com/medicine?name=" + medicine.name, {
+                                                                        method: "DELETE",
+                                                                })
+                                                                        .then((response) => response.json())
+                                                                        .then((data) => getMedicines())
+                                                                        .catch((error) => console.error(error));
+                                                        });
+                                                        let medicineModify = document.createElement("BUTTON");
+                                                        medicineModify.className = "btn btn-success w-100";
+                                                        medicineModify.innerText = "Modificar Medicina";
+                                                        medicineModify.addEventListener("click", () => {
+                                                                let params = `name=${medicine.name}`;
+                                                                params += `&price=${medicine.price}`;
+                                                                params += `&description=${medicine.description}`;
+                                                                params += `&quantity=${medicine.quantity}`;
+                                                                window.location = "modificarmedicine.html?" + params;
+                                                        });
+                                                        cardBody.appendChild(medicineName);
+                                                        cardBody.appendChild(medicineQuantity);
+                                                        cardBody.appendChild(medicinePrice);
+                                                        cardBody.appendChild(medicineDescription);
+                                                        cardBody.appendChild(medicineDelete);
+                                                        cardBody.appendChild(medicineModify);
+                                                        card.appendChild(cardBody);
+                                                        medicines.appendChild(card);
+                                                });
+                                        })
+                                        .catch((error) => console.error(error));
+                        }
+ 
+                        //loading medicines
+                        loadMedicines.addEventListener("click", () => {
+                                let file = medicinesFileInput.files[0];
+                                let reader = new FileReader();
+                                reader.readAsText(file);
+                                reader.onload = () => {
+                                        let data = reader.result;
+                                        let medicines = data.split("\n");
+                                        medicines = medicines.splice(1, medicines.length - 1);
+                                        medicines.forEach((medicine) => {
+                                                if (medicine !== "") {
+                                                        let medicineData = medicine.split(",");
+                                                        const newMedicine = {
+                                                                name: medicineData[0],
+                                                                price: medicineData[1],
+                                                                description: medicineData[2],
+                                                                quantity: medicineData[3],
+                                                        };
+                                                        console.log(newMedicine);
+                                                        fetch("https://uhospital-201404202.herokuapp.com/medicine", {
+                                                                method: "POST",
+                                                                headers: {
+                                                                        "content-type": "application/json",
+                                                                },
+                                                                body: JSON.stringify(newMedicine),
+                                                        })
+                                                                .then((response) => response.json())
+                                                                .then((data) => getMedicines())
+                                                                .catch((error) => console.error(error));
+                                                }
+                                        });
+                                };
+                                reader.onerror = () => console.error(reader.error);
+                        });
+ 
+                        //generate pdf report
+                        getReportMedicines.addEventListener("click", () => {
+                                window.open("https://uhospital-201404202.herokuapp.com/reports/medicine");
+                        });
+                </script>
+                <div class="container">
+                        <h3>Pacientes</h3>
+                        <div class="m-2">
+                                <span><input type="file" id="patientsFileInput" /></span>
+                                <span
+                                        ><button id="loadPatients" class="btn btn-success">
+                                                Cargar Pacientes
+                                        </button></span
+                                >
+                        </div>
+                        <div>
+                                <button id="getReportPatients" class="btn btn-primary w-100 m-2">
+                                        Generar reporte en pdf
+                                </button>
+                        </div>
+                        <div class="d-flex flex-column" id="patients"></div>
+                </div>
+                <script>
+                        //getting inputs
+                        let patients = document.getElementById("patients");
+                        let patientsFileInput = document.getElementById("patientsFileInput");
+                        let loadPatients = document.getElementById("loadPatients");
+                        let getReportPatients = document.getElementById("getReportPatients");
+ 
+                        //getting patients
+                        getPatients();
+                        function getPatients() {
+                                fetch("https://uhospital-201404202.herokuapp.com/patient")
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                patients.innerHTML = "";
+                                                data.forEach((patient) => {
+                                                        let card = document.createElement("div");
+                                                        card.className = "card m-2";
+                                                        card.id = patient.first_name;
+                                                        let cardBody = document.createElement("div");
+                                                        cardBody.className = "card-body";
+                                                        let patientFirstName = document.createElement("h5");
+                                                        patientFirstName.className = "card-title";
+                                                        patientFirstName.innerText = "Nombre: " + patient.first_name;
+                                                        let patientLastName = document.createElement("h5");
+                                                        patientLastName.className = "card-subtitle";
+                                                        patientLastName.innerText = "Apellido: " + patient.last_name;
+                                                        let patientGender = document.createElement("h5");
+                                                        patientGender.innerText = "Genero: " + patient.gender;
+                                                        let patientDate = document.createElement("h5");
+                                                        patientDate.innerText = "Fecha De Nacimiento: " + patient.date;
+                                                        let patientNickname = document.createElement("h5");
+                                                        patientNickname.innerText = "Nickname: " + patient.nickname;
+                                                        let patientPassword = document.createElement("h5");
+                                                        patientPassword.innerText = "Password: " + patient.password;
+                                                        let patientPhone = document.createElement("h5");
+                                                        patientPhone.innerText = "Telefono: " + patient.phone;
+                                                        let patientDelete = document.createElement("BUTTON");
+                                                        patientDelete.className = "btn btn-danger w-100";
+                                                        patientDelete.innerText = "Eliminar Paciente";
+                                                        patientDelete.addEventListener("click", () => {
+                                                                fetch("https://uhospital-201404202.herokuapp.com/patient?nickname=" + patient.nickname, {
+                                                                        method: "DELETE",
+                                                                })
+                                                                        .then((response) => response.json())
+                                                                        .then((data) => getPatients())
+                                                                        .catch((error) => console.error(error));
+                                                                });
+                                                        let patientModify = document.createElement("BUTTON");
+                                                        patientModify.className = "btn btn-success w-100";
+                                                        patientModify.innerText = "Modificar Paciente";
+                                                        patientModify.addEventListener("click", () => {
+                                                                let params = `first_name=${patient.first_name}`;
+                                                                params += `&last_name=${patient.last_name}`;
+                                                                params += `&date=${patient.date}`;
+                                                                params += `&gender=${patient.gender}`;
+                                                                params += `&nickname=${patient.nickname}`;
+                                                                params += `&password=${patient.password}`;
+                                                                params += `&phone=${patient.phone}`;
+                                                                params += `&typeUser=${patient.typeUser}`;
+                                                                window.location = "modificarpatientadmin.html?" + params;
+                                                                });
+                                                        cardBody.appendChild(patientFirstName);
+                                                        cardBody.appendChild(patientLastName);
+                                                        cardBody.appendChild(patientGender);
+                                                        cardBody.appendChild(patientDate);
+                                                        cardBody.appendChild(patientNickname);
+                                                        cardBody.appendChild(patientPassword);
+                                                        cardBody.appendChild(patientPhone);
+                                                        cardBody.appendChild(patientDelete);
+                                                        cardBody.appendChild(patientModify);
+                                                        card.appendChild(cardBody);
+                                                        patients.appendChild(card);
+                                                });
+                                        })
+                                        .catch((error) => console.error(error));
+                        }
+ 
+                        //loading patients
+                        loadPatients.addEventListener("click", () => {
+                                let file = patientsFileInput.files[0];
+                                let reader = new FileReader();
+                                reader.readAsText(file);
+                                reader.onload = () => {
+                                        let data = reader.result;
+                                        let patients = data.split("\n");
+                                        patients = patients.splice(1, patients.length - 1);
+                                        patients.forEach((patient) => {
+                                                if (patient !== "") {
+                                                        let patientData = patient.split(",");
+                                                        const newPatient = {
+                                                                first_name: patientData[0],
+                                                                last_name: patientData[1],
+                                                                date: patientData[2],
+                                                                gender: patientData[3],
+                                                                nickname: patientData[4],
+                                                                password: patientData[5],
+                                                                phone: patientData[6],
+                                                                typeUser: 1,
+                                                        };
+                                                        console.log(newPatient);
+                                                        fetch("https://uhospital-201404202.herokuapp.com/patient", {
+                                                                method: "POST",
+                                                                headers: {
+                                                                        "content-type": "application/json",
+                                                                },
+                                                                body: JSON.stringify(newPatient),
+                                                        })
+                                                                .then((response) => response.json())
+                                                                .then((data) => getPatients())
+                                                                .catch((error) => console.error(error));
+                                                }
+                                        });
+                                };
+                                reader.onerror = () => console.error(reader.error);
+                        });
+ 
+                        //generate pdf report
+                        getReportPatients.addEventListener("click", () => {
+                                window.open("https://uhospital-201404202.herokuapp.com/reports/patient");
+                        });
+                </script>
+                <div class="container">
+                        <h3>Enfermeras</h3>
+                        <div class="m-2">
+                                <span><input type="file" id="nurseryFileInput" /></span>
+                                <span
+                                        ><button id="loadNurserys" class="btn btn-success">
+                                                Cargar Enfermeras
+                                        </button></span
+                                >
+                        </div>
+                        <div>
+                                <button id="getReportNurserys" class="btn btn-primary w-100 m-2">
+                                        Generar reporte en pdf
+                                </button>
+                        </div>
+                        <div class="d-flex flex-column" id="nurserys"></div>
+                </div>
+                <script>
+                        //getting inputs
+                        let nurserys = document.getElementById("nurserys");
+                        let nurseryFileInput = document.getElementById("nurseryFileInput");
+                        let loadNurserys = document.getElementById("loadNurserys");
+                        let getReportNurserys = document.getElementById("getReportNurserys");
+ 
+                        //getting nurserys
+                        getNurserys();
+                        function getNurserys() {
+                                fetch("https://uhospital-201404202.herokuapp.com/nursery")
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                nurserys.innerHTML = "";
+                                                data.forEach((nursery) => {
+                                                        let card = document.createElement("div");
+                                                        card.className = "card m-2";
+                                                        card.id = nursery.first_name;
+                                                        let cardBody = document.createElement("div");
+                                                        cardBody.className = "card-body";
+                                                        let nurseryFirstName = document.createElement("h5");
+                                                        nurseryFirstName.className = "card-title";
+                                                        nurseryFirstName.innerText = "Nombre: " + nursery.first_name;
+                                                        let nurseryLastName = document.createElement("h5");
+                                                        nurseryLastName.className = "card-subtitle";
+                                                        nurseryLastName.innerText = "Apellido: " + nursery.last_name;
+                                                        let nurseryGender = document.createElement("h5");
+                                                        nurseryGender.innerText = "Genero: " + nursery.gender;
+                                                        let nurseryDate = document.createElement("h5");
+                                                        nurseryDate.innerText = "Fecha De Nacimiento: " + nursery.date;
+                                                        let nurseryNickname = document.createElement("h5");
+                                                        nurseryNickname.innerText = "Nickname: " + nursery.nickname;
+                                                        let nurseryPassword = document.createElement("h5");
+                                                        nurseryPassword.innerText = "Password: " + nursery.password;
+                                                        let nurseryPhone = document.createElement("h5");
+                                                        nurseryPhone.innerText = "Telefono: " + nursery.phone;
+                                                        let nurseryDelete = document.createElement("BUTTON");
+                                                        nurseryDelete.className = "btn btn-danger w-100";
+                                                        nurseryDelete.innerText = "Eliminar Enfermera";
+                                                        nurseryDelete.addEventListener("click", () => {
+                                                                fetch("https://uhospital-201404202.herokuapp.com/nursery?nickname=" + nursery.nickname, {
+                                                                        method: "DELETE",
+                                                                })
+                                                                        .then((response) => response.json())
+                                                                        .then((data) => getPatients())
+                                                                        .catch((error) => console.error(error));
+                                                        });
+                                                        let nurseryModify = document.createElement("BUTTON");
+                                                        nurseryModify.className = "btn btn-success w-100";
+                                                        nurseryModify.innerText = "Modificar Enfermera";
+                                                        nurseryModify.addEventListener("click", () => {
+                                                                let params = `first_name=${nursery.first_name}`;
+                                                                params += `&last_name=${nursery.last_name}`;
+                                                                params += `&date=${nursery.date}`;
+                                                                params += `&gender=${nursery.gender}`;
+                                                                params += `&nickname=${nursery.nickname}`;
+                                                                params += `&password=${nursery.password}`;
+                                                                params += `&phone=${nursery.phone}`;
+                                                                params += `&typeUser=${nursery.typeUser}`;
+                                                                window.location = "modificarnurseryadmin.html?" + params;
+                                                                });
+                                                        cardBody.appendChild(nurseryFirstName);
+                                                        cardBody.appendChild(nurseryLastName);
+                                                        cardBody.appendChild(nurseryGender);
+                                                        cardBody.appendChild(nurseryDate);
+                                                        cardBody.appendChild(nurseryNickname);
+                                                        cardBody.appendChild(nurseryPassword);
+                                                        cardBody.appendChild(nurseryPhone);
+                                                        cardBody.appendChild(nurseryDelete);
+                                                        cardBody.appendChild(nurseryModify);
+                                                        card.appendChild(cardBody);
+                                                        nurserys.appendChild(card);
+                                                });
+                                        })
+                                        .catch((error) => console.error(error));
+                        }
+ 
+                        //loading nurserys
+                        loadNurserys.addEventListener("click", () => {
+                                let file = nurseryFileInput.files[0];
+                                let reader = new FileReader();
+                                reader.readAsText(file);
+                                reader.onload = () => {
+                                        let data = reader.result;
+                                        let nurserys = data.split("\n");
+                                        nurserys = nurserys.splice(1, nurserys.length - 1);
+                                        nurserys.forEach((nursery) => {
+                                                if (nursery !== "") {
+                                                        let nurseryData = nursery.split(",");
+                                                        const newNursery = {
+                                                                first_name: nurseryData[0],
+                                                                last_name: nurseryData[1],
+                                                                date: nurseryData[2],
+                                                                gender: nurseryData[3],
+                                                                nickname: nurseryData[4],
+                                                                password: nurseryData[5],
+                                                                phone: nurseryData[6],
+                                                                typeUser: 2,
+                                                        };
+                                                        console.log(newNursery);
+                                                        fetch("https://uhospital-201404202.herokuapp.com/nursery", {
+                                                                method: "POST",
+                                                                headers: {
+                                                                        "content-type": "application/json",
+                                                                },
+                                                                body: JSON.stringify(newNursery),
+                                                        })
+                                                                .then((response) => response.json())
+                                                                .then((data) => getNurserys())
+                                                                .catch((error) => console.error(error));
+                                                }
+                                        });
+                                };
+                                reader.onerror = () => console.error(reader.error);
+                        });
+ 
+                        //generate pdf report
+                        getReportNurserys.addEventListener("click", () => {
+                                window.open("https://uhospital-201404202.herokuapp.com/reports/nursery");
+                        });
+                </script>
+                </script>
+                <div class="container">
+                        <h3>Doctores</h3>
+                        <div class="m-2">
+                                <span><input type="file" id="doctorFileInput" /></span>
+                                <span
+                                        ><button id="loadDoctors" class="btn btn-success">
+                                                Cargar Doctores
+                                        </button></span
+                                >
+                        </div>
+                        <div>
+                                <button id="getReportDoctors" class="btn btn-primary w-100 m-2">
+                                        Generar reporte en pdf
+                                </button>
+                        </div>
+                        <div class="d-flex flex-column" id="doctors"></div>
+                </div>
+                <script>
+                        //getting inputs
+                        let doctors = document.getElementById("doctors");
+                        let doctorFileInput = document.getElementById("doctorFileInput");
+                        let loadDoctors = document.getElementById("loadDoctors");
+                        let getReportDoctors = document.getElementById("getReportDoctors");
+ 
+                        //getting doctors
+                        getDoctors();
+                        function getDoctors() {
+                                fetch("https://uhospital-201404202.herokuapp.com/doctor")
+                                        .then((response) => response.json())
+                                        .then((data) => {
+                                                doctors.innerHTML = "";
+                                                data.forEach((doctor) => {
+                                                        let card = document.createElement("div");
+                                                        card.className = "card m-2";
+                                                        card.id = doctor.first_name;
+                                                        let cardBody = document.createElement("div");
+                                                        cardBody.className = "card-body";
+                                                        let doctorFirstName = document.createElement("h5");
+                                                        doctorFirstName.className = "card-title";
+                                                        doctorFirstName.innerText = "Nombre: " + doctor.first_name;
+                                                        let doctorLastName = document.createElement("h5");
+                                                        doctorLastName.className = "card-subtitle";
+                                                        doctorLastName.innerText = "Apellido: " + doctor.last_name;
+                                                        let doctorGender = document.createElement("h5");
+                                                        doctorGender.innerText = "Genero: " + doctor.gender;
+                                                        let doctorDate = document.createElement("h5");
+                                                        doctorDate.innerText = "Fecha De Nacimiento: " + doctor.date;
+                                                        let doctorNickname = document.createElement("h5");
+                                                        doctorNickname.innerText = "Nickname: " + doctor.nickname;
+                                                        let doctorPassword = document.createElement("h5");
+                                                        doctorPassword.innerText = "Password: " + doctor.password;
+                                                        let doctorSpecialty = document.createElement("h5");
+                                                        doctorSpecialty.innerText = "Especialidad: " + doctor.specialty;
+                                                        let doctorPhone = document.createElement("h5");
+                                                        doctorPhone.innerText = "Telefono: " + doctor.phone;
+                                                        let doctorDelete = document.createElement("BUTTON");
+                                                        doctorDelete.className = "btn btn-danger w-100";
+                                                        doctorDelete.innerText = "Eliminar Doctor";
+                                                        doctorDelete.addEventListener("click", () => {
+                                                                fetch("https://uhospital-201404202.herokuapp.com/doctor?nickname=" + doctor.nickname, {
+                                                                        method: "DELETE",
+                                                                })
+                                                                        .then((response) => response.json())
+                                                                        .then((data) => getDoctors())
+                                                                        .catch((error) => console.error(error));
+                                                        });
+                                                        let doctorModify = document.createElement("BUTTON");
+                                                        doctorModify.className = "btn btn-success w-100";
+                                                        doctorModify.innerText = "Modificar Doctor";
+                                                        doctorModify.addEventListener("click", () => {
+                                                                let params = `first_name=${doctor.first_name}`;
+                                                                params += `&last_name=${doctor.last_name}`;
+                                                                params += `&date=${doctor.date}`;
+                                                                params += `&gender=${doctor.gender}`;
+                                                                params += `&nickname=${doctor.nickname}`;
+                                                                params += `&password=${doctor.password}`;
+                                                                params += `&specialty=${doctor.specialty}`;
+                                                                params += `&phone=${doctor.phone}`;
+                                                                params += `&typeUser=${doctor.typeUser}`;
+                                                                window.location = "modificardoctoradmin.html?" + params;
+                                                                });
+                                                        cardBody.appendChild(doctorFirstName);
+                                                        cardBody.appendChild(doctorLastName);
+                                                        cardBody.appendChild(doctorGender);
+                                                        cardBody.appendChild(doctorDate);
+                                                        cardBody.appendChild(doctorNickname);
+                                                        cardBody.appendChild(doctorPassword);
+                                                        cardBody.appendChild(doctorSpecialty);
+                                                        cardBody.appendChild(doctorPhone);
+                                                        cardBody.appendChild(doctorDelete);
+                                                        cardBody.appendChild(doctorModify);
+                                                        card.appendChild(cardBody);
+                                                        doctors.appendChild(card);
+                                                });
+                                        })
+                                        .catch((error) => console.error(error));
+                        }
+ 
+                        //loading doctors
+                        loadDoctors.addEventListener("click", () => {
+                                let file = doctorFileInput.files[0];
+                                let reader = new FileReader();
+                                reader.readAsText(file);
+                                reader.onload = () => {
+                                        let data = reader.result;
+                                        let doctors = data.split("\n");
+                                        doctors = doctors.splice(1, doctors.length - 1);
+                                        doctors.forEach((doctor) => {
+                                                if (doctor !== "") {
+                                                        let doctorData = doctor.split(",");
+                                                        const newDoctor = {
+                                                                first_name: doctorData[0],
+                                                                last_name: doctorData[1],
+                                                                date: doctorData[2],
+                                                                gender: doctorData[3],
+                                                                nickname: doctorData[4],
+                                                                password: doctorData[5],
+                                                                specialty: doctorData[6],
+                                                                phone: doctorData[7],
+                                                                typeUser: 3,
+                                                        };
+                                                        console.log(newDoctor);
+                                                        fetch("https://uhospital-201404202.herokuapp.com/doctor", {
+                                                                method: "POST",
+                                                                headers: {
+                                                                        "content-type": "application/json",
+                                                                },
+                                                                body: JSON.stringify(newDoctor),
+                                                        })
+                                                                .then((response) => response.json())
+                                                                .then((data) => getDoctors())
+                                                                .catch((error) => console.error(error));
+                                                }
+                                        });
+                                };
+                                reader.onerror = () => console.error(reader.error);
+                        });
+ 
+                        //generate pdf report
+                        getReportDoctors.addEventListener("click", () => {
+                                window.open("https://uhospital-201404202.herokuapp.com/reports/doctor");
+                        });
+                </script>
+                <script
+                        src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+                        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+                        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+                        crossorigin="anonymous"
+                ></script>
+                <script
+                        src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+                        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+                        crossorigin="anonymous"
+                ></script>
+        </body>
+</html>
